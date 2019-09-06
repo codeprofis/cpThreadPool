@@ -35,6 +35,10 @@ namespace Cp {
             template<typename F, typename Class, typename ...Args>
             auto executeClassMember(int, F, Class, Args &&...);
 
+
+            template<typename F, typename Class, typename ...Args>
+            void executeClassMember(int, F, Class, Args &&...);
+
         private:
 
             size_t _threadCount;
