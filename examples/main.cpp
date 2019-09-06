@@ -52,6 +52,7 @@ public:
     }
 
     int m2(Argument t) {
+        std::cout << t.x*t.y;
         return t.x*t.y;
     }
 
