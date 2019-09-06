@@ -52,7 +52,7 @@ endif()
 # Library folder name (by default is the project name in lowercase)
 # Example: #include <foo/foo.h>
 if(NOT LIBRARY_FOLDER)
-    set(LIBRARY_FOLDER ${PROJECT_NAME_LOWERCASE})
+    set(LIBRARY_FOLDER ${PROJECT_NAME})
 endif()
 
 # The export set for all the targets
