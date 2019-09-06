@@ -23,13 +23,17 @@ int multiply(int x, int y) {
     return x*y;
 }
 
+class Entry {
+public:
+    int t;
+};
 
 class T {
 public:
 
     class Argument {
     public:
-        int x;
+        Entry x;
         int y;
     };
 
@@ -52,8 +56,8 @@ public:
     }
 
     int m2(Argument t) {
-        std::cout << t.x*t.y;
-        return t.x*t.y;
+        std::cout << t.x.t*t.y;
+        return t.x.t*t.y;
     }
 
     void m4() {
@@ -69,7 +73,7 @@ public:
        //pool.executeClassMember(30, &T::m, &t, 140, 2);
 
         T::Argument a;
-        a.x = 2;
+        a.x.t = 2;
         a.y = 2;
         pool.executeClassMember(30, &T::m2, this, a);
     }

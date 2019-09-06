@@ -3,6 +3,9 @@ project(CpThreadPool)
 
 set(CMAKE_CXX_STANDARD 17)
 
+EXECUTE_PROCESS( COMMAND gcc -dumpversion GCC_VERSION )
+message("${GCC_VERSION}")
+
 # Set variables
 include(${CMAKE_SOURCE_DIR}/cmake/SetEnv.cmake)
 
