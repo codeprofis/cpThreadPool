@@ -6,6 +6,8 @@ set(CMAKE_CXX_STANDARD 17)
 # Set variables
 include(${CMAKE_SOURCE_DIR}/cmake/SetEnv.cmake)
 
+add_subdirectory(examples)
+
 # Library sources
 add_subdirectory(${LIBRARY_FOLDER})
 
