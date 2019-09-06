@@ -37,7 +37,7 @@ namespace Cp {
 
 
             template<typename F, typename Class, typename ...Args>
-            void executeClassMember(int, F, Class, Args &&...);
+            void executeClassMemberNR(int, F, Class, Args &&...);
 
         private:
 

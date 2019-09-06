@@ -28,7 +28,7 @@ namespace Cp {
         }
 
         template<typename F, typename Class, typename... Args>
-        void CpPrioThreadPool::executeClassMember(int prio, F function, Class cl, Args &&... args) {
+        void CpPrioThreadPool::executeClassMemberNR(int prio, F function, Class cl, Args &&... args) {
             std::unique_lock<std::mutex> queue_lock(_task_mutex, std::defer_lock);
             std::packaged_task<std::invoke_result_t<F, Class, Args...>()> task_pkg(
                     std::bind(function, cl, args...)
