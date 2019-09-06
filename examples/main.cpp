@@ -26,6 +26,13 @@ int multiply(int x, int y) {
 
 class T {
 public:
+
+    class Argument {
+    public:
+        int x;
+        int y;
+    };
+
     int m(int x, int y) {
 
         srand(x*7);
@@ -43,21 +50,51 @@ public:
 
         return x * y;
     }
+
+    int m2(Argument t) {
+        return t.x*t.y;
+    }
+
+    void m4() {
+        Cp::ThreadPool::CpPrioThreadPool pool(2);
+        pool.init();
+
+        std::cout << "Pool inited" << std::endl;
+
+        /*pool.execute(1, multiply, 15, 2);
+        pool.execute(1, multiply, 30, 2);
+        pool.execute(10, multiply, 60, 2);
+        pool.execute(40, multiply, 120, 2);*/
+       //pool.executeClassMember(30, &T::m, &t, 140, 2);
+
+        T::Argument a;
+        a.x = 2;
+        a.y = 2;
+        pool.executeClassMember(30, &T::m2, this, a);
+    }
+
+
 };
 
 int main() {
-     T t;
+   /*  T t;
 
     Cp::ThreadPool::CpPrioThreadPool pool(2);
     pool.init();
 
     std::cout << "Pool inited" << std::endl;
 
-    pool.execute(1, multiply, 15, 2);
-    pool.execute(1, multiply, 30, 2);
-    pool.execute(10, multiply, 60, 2);
-    pool.execute(40, multiply, 120, 2);
+
     pool.executeClassMember(30, &T::m, &t, 140, 2);
+
+    T::Argument a;
+    a.x = 2;
+    a.y = 2;
+    pool.executeClassMember(30, &T::m2, &t, a);*/
+
+
+   T t;
+   t.m4();
 
     return 0;
 }
