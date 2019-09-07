@@ -3,7 +3,7 @@ project(CpThreadPool)
 
 set(CMAKE_CXX_STANDARD 17)
 
-EXECUTE_PROCESS( COMMAND gcc -dumpversion GCC_VERSION )
+EXECUTE_PROCESS( COMMAND gcc --version )
 message("${GCC_VERSION}")
 
 # Set variables

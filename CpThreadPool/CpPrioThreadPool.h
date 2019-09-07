@@ -29,15 +29,68 @@ namespace Cp {
 
 
             template<typename F, typename ...Args>
-            auto execute(int, F, Args &&...);
+            auto execute(int prio, F function, Args &&... args) {
+                std::unique_lock<std::mutex> queue_lock(_task_mutex, std::defer_lock);
+                std::packaged_task<std::invoke_result_t<F, Args...>()> task_pkg(
+                        std::bind(function, args...)
+                );
+                std::future<std::invoke_result_t<F, Args...>> future = task_pkg.get_future();
+
+                std::shared_ptr<TaskContainer> t = std::make_shared<TaskContainer>();
+                t->priority = prio;
+                t->tc = allocate_task_container(std::move(task_pkg));
+
+                queue_lock.lock();
+                _queue.push(std::move(t));
+                queue_lock.unlock();
+
+                _task_cv.notify_one();
+
+                return std::move(future);
+            }
 
 
             template<typename F, typename Class, typename ...Args>
-            auto executeClassMember(int, F, Class, Args &&...);
+            auto executeClassMember(int prio, F function, Class cl, Args &&...args) {
+                std::unique_lock<std::mutex> queue_lock(_task_mutex, std::defer_lock);
+                std::packaged_task<std::invoke_result_t<F, Class, Args...>()> task_pkg(
+                        std::bind(function, cl, args...)
+                );
+                std::future<std::invoke_result_t<F, Class, Args...>> future = task_pkg.get_future();
+
+                std::shared_ptr<TaskContainer> t = std::make_shared<TaskContainer>();
+                t->priority = prio;
+                t->tc = allocate_task_container(std::move(task_pkg));
+
+                queue_lock.lock();
+                _queue.push(std::move(t));
+                queue_lock.unlock();
+
+                _task_cv.notify_one();
+
+                return std::move(future);
+            }
+
 
 
             template<typename F, typename Class, typename ...Args>
-            void executeClassMemberNR(int, F, Class, Args &&...);
+            void executeClassMemberNR(int prio, F function, Class cl, Args &&... args) {
+                std::unique_lock<std::mutex> queue_lock(_task_mutex, std::defer_lock);
+                std::packaged_task<std::invoke_result_t<F, Class, Args...>()> task_pkg(
+                        std::bind(function, cl, args...)
+                );
+                std::future<std::invoke_result_t<F, Class, Args...>> future = task_pkg.get_future();
+
+                std::shared_ptr<TaskContainer> t = std::make_shared<TaskContainer>();
+                t->priority = prio;
+                t->tc = allocate_task_container(std::move(task_pkg));
+
+                queue_lock.lock();
+                _queue.push(std::move(t));
+                queue_lock.unlock();
+
+                _task_cv.notify_one();
+            }
 
         private:
 
@@ -99,69 +152,6 @@ namespace Cp {
             std::condition_variable _task_cv;
             bool _stop_threads = false;
         };
-
-        template<typename F, typename Class, typename... Args>
-        auto CpPrioThreadPool::executeClassMember(int prio, F function, Class cl, Args &&... args) {
-            std::unique_lock<std::mutex> queue_lock(_task_mutex, std::defer_lock);
-            std::packaged_task<std::invoke_result_t<F, Class, Args...>()> task_pkg(
-                    std::bind(function, cl, args...)
-            );
-            std::future<std::invoke_result_t<F, Class, Args...>> future = task_pkg.get_future();
-
-            std::shared_ptr<TaskContainer> t = std::make_shared<TaskContainer>();
-            t->priority = prio;
-            t->tc = allocate_task_container(std::move(task_pkg));
-
-            queue_lock.lock();
-            _queue.push(std::move(t));
-            queue_lock.unlock();
-
-            _task_cv.notify_one();
-
-            return std::move(future);
-        }
-
-        template<typename F, typename Class, typename... Args>
-        void CpPrioThreadPool::executeClassMemberNR(int prio, F function, Class cl, Args &&... args) {
-            std::unique_lock<std::mutex> queue_lock(_task_mutex, std::defer_lock);
-            std::packaged_task<std::invoke_result_t<F, Class, Args...>()> task_pkg(
-                    std::bind(function, cl, args...)
-            );
-            std::future<std::invoke_result_t<F, Class, Args...>> future = task_pkg.get_future();
-
-            std::shared_ptr<TaskContainer> t = std::make_shared<TaskContainer>();
-            t->priority = prio;
-            t->tc = allocate_task_container(std::move(task_pkg));
-
-            queue_lock.lock();
-            _queue.push(std::move(t));
-            queue_lock.unlock();
-
-            _task_cv.notify_one();
-        }
-
-
-        template<typename F, typename... Args>
-        auto CpPrioThreadPool::execute(int prio, F function, Args &&... args) {
-            std::unique_lock<std::mutex> queue_lock(_task_mutex, std::defer_lock);
-            std::packaged_task<std::invoke_result_t<F, Args...>()> task_pkg(
-                    std::bind(function, args...)
-            );
-            std::future<std::invoke_result_t<F, Args...>> future = task_pkg.get_future();
-
-            std::shared_ptr<TaskContainer> t = std::make_shared<TaskContainer>();
-            t->priority = prio;
-            t->tc = allocate_task_container(std::move(task_pkg));
-
-            queue_lock.lock();
-            _queue.push(std::move(t));
-            queue_lock.unlock();
-
-            _task_cv.notify_one();
-
-            return std::move(future);
-        }
-
 
     }
 }
