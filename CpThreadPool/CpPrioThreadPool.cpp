@@ -31,6 +31,7 @@ namespace Cp {
                                     std::unique_lock<std::mutex> queue_lock(_task_mutex, std::defer_lock);
 
                                     while (true) {
+                                        std::this_thread::sleep_for(std::chrono::milliseconds(500));
                                         queue_lock.lock();
                                         _task_cv.wait(
                                                 queue_lock,
