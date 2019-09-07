@@ -31,12 +31,13 @@ namespace Cp {
                                     std::unique_lock<std::mutex> queue_lock(_task_mutex, std::defer_lock);
 
                                     while (true) {
-                                        if(!this->_tasks_paused) {
                                             std::this_thread::sleep_for(std::chrono::milliseconds(500));
                                             queue_lock.lock();
                                             _task_cv.wait(
                                                     queue_lock,
-                                                    [&]() -> bool { return !_queue.empty() || _stop_threads; }
+                                                    [&]() -> bool {
+                                                        return !_tasks_paused || _stop_threads;
+                                                    }
                                             );
 
                                             if (_stop_threads && _queue.empty()) return;
@@ -47,7 +48,6 @@ namespace Cp {
                                             queue_lock.unlock();
 
                                             (*temp_task->tc)();
-                                        }
                                     }
                                 }
                         )
