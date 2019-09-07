@@ -27,6 +27,14 @@ namespace Cp {
             void init(size_t threadCount);
             ~CpPrioThreadPool();
 
+            void startTasks() {
+                this->_tasks_paused = false;
+            }
+
+            void stopTasks() {
+                this->_tasks_paused = true;
+            }
+
 
             template<typename F, typename ...Args>
             auto execute(int prio, F function, Args &&... args) {
@@ -151,6 +159,7 @@ namespace Cp {
             std::mutex _task_mutex;
             std::condition_variable _task_cv;
             bool _stop_threads = false;
+            bool _tasks_paused = true;
         };
 
     }

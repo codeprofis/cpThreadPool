@@ -31,21 +31,23 @@ namespace Cp {
                                     std::unique_lock<std::mutex> queue_lock(_task_mutex, std::defer_lock);
 
                                     while (true) {
-                                        std::this_thread::sleep_for(std::chrono::milliseconds(500));
-                                        queue_lock.lock();
-                                        _task_cv.wait(
-                                                queue_lock,
-                                                [&]() -> bool { return !_queue.empty() || _stop_threads; }
-                                        );
+                                        if(!this->_tasks_paused) {
+                                            std::this_thread::sleep_for(std::chrono::milliseconds(500));
+                                            queue_lock.lock();
+                                            _task_cv.wait(
+                                                    queue_lock,
+                                                    [&]() -> bool { return !_queue.empty() || _stop_threads; }
+                                            );
 
-                                        if (_stop_threads && _queue.empty()) return;
+                                            if (_stop_threads && _queue.empty()) return;
 
-                                        //auto temp_task = std::move(_queue.top());
-                                        std::shared_ptr<TaskContainer> temp_task = std::move(_queue.top());
-                                        _queue.pop();
-                                        queue_lock.unlock();
+                                            //auto temp_task = std::move(_queue.top());
+                                            std::shared_ptr<TaskContainer> temp_task = std::move(_queue.top());
+                                            _queue.pop();
+                                            queue_lock.unlock();
 
-                                        (*temp_task->tc)();
+                                            (*temp_task->tc)();
+                                        }
                                     }
                                 }
                         )
