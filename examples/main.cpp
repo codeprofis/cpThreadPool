@@ -31,10 +31,10 @@ int main() {
 
     Cp::ThreadPool::CpPrioThreadPool pool;
     pool.init(2);
-    pool.execute(1, multiply, 15, 2);
-pool.execute(1, multiply, 30, 2);
-pool.execute(10, multiply, 60, 2);
-pool.execute(40, multiply, 120, 2);
+    pool.execute(1, "Multiply 1", multiply, 15, 2);
+pool.execute(1, "Multiply 1", multiply, 30, 2);
+pool.execute(10, "Multiply 10", multiply, 60, 2);
+pool.execute(40, "Multiply 40", multiply, 120, 2);
 
 pool.startTasks();
     //pool.executeClassMember(30, &T::m, &t, 140, 2);
