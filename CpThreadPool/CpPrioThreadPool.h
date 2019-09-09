@@ -13,6 +13,7 @@
 #include <mutex>
 #include <condition_variable>
 #include <type_traits>
+#include <iomanip>
 
 namespace Cp {
     namespace ThreadPool {
@@ -21,10 +22,13 @@ namespace Cp {
         class CpPrioThreadPool {
         public:
             CpPrioThreadPool() {}
-            CpPrioThreadPool(size_t thread_count) : _threadCount(thread_count)  {}
+
+            CpPrioThreadPool(size_t thread_count) : _threadCount(thread_count) {}
 
             void init();
+
             void init(size_t threadCount);
+
             ~CpPrioThreadPool();
 
             void startTasks() {
@@ -35,9 +39,24 @@ namespace Cp {
                 this->_tasks_paused = true;
             }
 
+            friend  std::ostream &operator<<(std::ostream &os, CpPrioThreadPool &m) {
+                const char separator    = ' ';
+                const int nameWidth     = 10;
+                const int numWidth      = 8;
+
+                std::cout << "Following tasks are scheduled for execution:" << std::endl;
+                std::cout << "--------------------------------------------" << std::endl << std::endl;
+
+                m._task_mutex.lock();
+                for(auto& k : m._queue.impl()) {
+                    std::cout << std::left << std::setw(numWidth) << std::setfill(separator) << k->priority << std::setw(nameWidth) << std::setfill(separator) << k->name << std::endl;
+                }
+                m._task_mutex.unlock();
+            }
+
 
             template<typename F, typename ...Args>
-            auto execute(int prio, F function, Args &&... args) {
+            auto execute(int prio, std::string name, F function, Args &&... args) {
                 std::unique_lock<std::mutex> queue_lock(_task_mutex, std::defer_lock);
                 std::packaged_task<std::invoke_result_t<F, Args...>()> task_pkg(
                         std::bind(function, args...)
@@ -47,6 +66,7 @@ namespace Cp {
                 std::shared_ptr<TaskContainer> t = std::make_shared<TaskContainer>();
                 t->priority = prio;
                 t->tc = allocate_task_container(std::move(task_pkg));
+                t->name = name;
 
                 queue_lock.lock();
                 _queue.push(std::move(t));
@@ -59,7 +79,7 @@ namespace Cp {
 
 
             template<typename F, typename Class, typename ...Args>
-            auto executeClassMember(int prio, F function, Class cl, Args &&...args) {
+            auto executeClassMember(int prio, std::string name, F function, Class cl, Args &&...args) {
                 std::unique_lock<std::mutex> queue_lock(_task_mutex, std::defer_lock);
                 std::packaged_task<std::invoke_result_t<F, Class, Args...>()> task_pkg(
                         std::bind(function, cl, args...)
@@ -69,6 +89,7 @@ namespace Cp {
                 std::shared_ptr<TaskContainer> t = std::make_shared<TaskContainer>();
                 t->priority = prio;
                 t->tc = allocate_task_container(std::move(task_pkg));
+                t->name = name;
 
                 queue_lock.lock();
                 _queue.push(std::move(t));
@@ -80,9 +101,8 @@ namespace Cp {
             }
 
 
-
             template<typename F, typename Class, typename ...Args>
-            void executeClassMemberNR(int prio, F function, Class cl, Args &&... args) {
+            void executeClassMemberNR(int prio, std::string name, F function, Class cl, Args &&... args) {
                 std::unique_lock<std::mutex> queue_lock(_task_mutex, std::defer_lock);
                 std::packaged_task<std::invoke_result_t<F, Class, Args...>()> task_pkg(
                         std::bind(function, cl, args...)
@@ -92,6 +112,7 @@ namespace Cp {
                 std::shared_ptr<TaskContainer> t = std::make_shared<TaskContainer>();
                 t->priority = prio;
                 t->tc = allocate_task_container(std::move(task_pkg));
+                t->name = name;
 
                 queue_lock.lock();
                 _queue.push(std::move(t));
@@ -125,7 +146,6 @@ namespace Cp {
             };
 
 
-
             template<typename _Func>
             static std::unique_ptr<_task_container_base> allocate_task_container(_Func &&f) {
                 return std::unique_ptr<_task_container_base>(new _task_container<_Func>(std::forward<_Func>(f)));
@@ -136,30 +156,45 @@ namespace Cp {
                 ~TaskContainer() {
                     tc.release();
                 }
+
                 std::unique_ptr<_task_container_base> tc;
                 int priority;
+                std::string name;
             };
 
             class QueueCompare {
             public:
-                bool operator() (std::shared_ptr<TaskContainer> t1, std::shared_ptr<TaskContainer> t2) {
+                bool operator()(std::shared_ptr<TaskContainer> t1, std::shared_ptr<TaskContainer> t2) {
                     return t1->priority < t2->priority;
                 }
             };
 
             class QueueCompareUnique {
             public:
-                bool operator() (const std::unique_ptr<TaskContainer>& t1, const std::unique_ptr<TaskContainer>& t2) {
+                bool operator()(const std::unique_ptr<TaskContainer> &t1, const std::unique_ptr<TaskContainer> &t2) {
                     return t1->priority < t2->priority;
                 }
             };
 
-            std::priority_queue<std::shared_ptr<TaskContainer>, std::vector<std::shared_ptr<TaskContainer>>, QueueCompare> _queue;
+            class IteratableQueue
+                    : public std::priority_queue<std::shared_ptr<TaskContainer>, std::vector<std::shared_ptr<TaskContainer>>, QueueCompare> {
+            public:
+                std::vector<std::shared_ptr<TaskContainer>> &impl() {
+                    return c;
+                }
+            };
+
+
+
+
             std::vector<std::thread> _threads;
-            std::mutex _task_mutex;
             std::condition_variable _task_cv;
             bool _stop_threads = false;
             bool _tasks_paused = true;
+
+        public:
+            std::mutex _task_mutex;
+            IteratableQueue _queue;
         };
 
     }

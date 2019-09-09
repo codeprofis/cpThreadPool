@@ -36,18 +36,23 @@ namespace Cp {
                                             _task_cv.wait(
                                                     queue_lock,
                                                     [&]() -> bool {
-                                                        return !_tasks_paused || _stop_threads;
+                                                        return !_queue.empty() || _stop_threads;
                                                     }
                                             );
 
                                             if (_stop_threads && _queue.empty()) return;
 
-                                            //auto temp_task = std::move(_queue.top());
-                                            std::shared_ptr<TaskContainer> temp_task = std::move(_queue.top());
-                                            _queue.pop();
-                                            queue_lock.unlock();
+                                            if(!_tasks_paused) {
 
-                                            (*temp_task->tc)();
+                                                //auto temp_task = std::move(_queue.top());
+                                                std::shared_ptr<TaskContainer> temp_task = std::move(_queue.top());
+                                                _queue.pop();
+                                                queue_lock.unlock();
+
+                                                (*temp_task->tc)();
+                                            } else {
+                                                queue_lock.unlock();
+                                            }
                                     }
                                 }
                         )
